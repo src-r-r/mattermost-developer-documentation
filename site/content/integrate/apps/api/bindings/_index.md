@@ -26,35 +26,49 @@ Some fields included in the context:
 The expected response should include the following:
 
 | Name   | Type | Description           |
-| :----- | :------- | :-------------------- |
-| `data` | Bindings | The list of (top-level) bindings and their sub-bindings. |
+| :----- | :-------- | :-------------------- |
+| `type` | string    | "ok" |
+| `data` | []Binding | The list of (top-level) bindings and their sub-bindings. |
 
-Each Binding must provide one and only one of:
-| Name   | Type | Description           |
-| :----- | :------- | :-------------------- |
-| `submit` | `Call` |  The call to perform if the Binding is invoked by the user. |
-| `form` | `Form` | Modal form to open.  |
-<!-- TODO: "open_as" -->
-| `bindings` | `Bindings` | Sub-bindings, mostly used for subcommands.  |
-
+### top-level bindings
 Bindings are organized by top level locations. Top level bindings just need to define:
 
 | Name       | Type     | Description                             |
 | :--------- | :------- | :-------------------------------------- |
-| `location` | string   | Top level location.                     |
-| `bindings` | Bindings | A list of bindings under this location. |
-<!-- TODO: how to customise top-level /-command -->
-<!-- TODO: defaulting for label, location -->
+| `location` | string   | A pre-defined top level location, e.g. `/command`. |
+| `bindings` | []Binding | A list of bindings for this location. |
 
-`/in_post` bindings don't need to be defined in this call.
+<!-- TODO: how to customise top-level /-command -->
+
+**NOTE**: `/in_post` bindings should not be included in the bindings response.
+
+
+### all bindings (common attributes)
+
+Each Binding consists of:
+
+| Name   | Type | Description           |
+| :----- | :------- | :-------------------- |
+| `Location` | string | (Optional) Location allows the App to identify where in the UX the Call request comes from. defaults to the App ID. Location defaults to Label, one of them must be provided. |
+| `Label` | string | (Optional) Label is the (usually short) primary text to display at the location. For command autocomplete, Label defaults to Location, one of them must be provided. |
+| `Description` | string | (Optional) Description is the extended help text, used in post-embedded, modals and command autocomplete. |
+| `Hint` | string | (Optional) Hint is the secondary text to display, used in command autocomplete and channel header. |
+| `Icon` | string | (Optional) Icon is the icon to display, should be either a fully-qualified URL, or a path for an app's static asset. |
+
+Each binding must include one of the following:
+
+| Name   | Type | Description           |
+| :----- | :------- | :-------------------- |
+| `submit` | Call |  The call to perform immediately if the Binding is invoked by the user. |
+| `form` | Form | The (modal) form to open to gather more info, or to confirm submission.  |
+| `bindings` | Bindings | Sub-bindings, used for sub-commands and sub-menus. |
+<!-- TODO: "open_as" -->
 
 ### `/post_menu` bindings
 
 | Name       | Type   | Description                                                                                                       |
 | :--------- | :----- | :---------------------------------------------------------------------------------------------------------------- |
-| `location` | string | Name of this location. The whole path of locations will be added in the context. Must be unique in its level.     |
-| `icon`     | string | (Optional) Either a fully-qualified URL, or a path for an app's static asset.                                     |
-| `label`    | string | (Optional) Text to show in the item. Defaults to location. Must be unique in its level.                           |
+| `label`    | string | (Optional) Label is used as the text to show in the post menu. |
 
 The call for these bindings will include in the context the user ID, the post ID, the root post ID if any, the channel ID, and the team ID.
 
@@ -62,10 +76,8 @@ The call for these bindings will include in the context the user ID, the post ID
 
 | Name       | Type   | Description                                                                                                                 |
 | :--------- | :----- | :-------------------------------------------------------------------------------------------------------------------------- |
-| `location` | string | Name of this location. The whole path of locations will be added in the context. Must be unique in its level.               |
-| `icon`     | string | (Optional/Web App required) Either a fully-qualified URL, or a path for an app's static asset.                              |
-| `label`    | string | (Optional) Text to show in the item on mobile and webapp collapsed view. Defaults to location. Must be unique in its level. |
-| `hint`     | string | (Optional/Web App required) Text to show in tooltip.                                                                        |
+| `label`    | string | (Optional) Text to show in the item on mobile and webapp collapsed view. |
+| `hint`     | string | (required for Web App) Text to show in tooltip. |
 
 The context of the call for these bindings will include the user ID, the channel ID, and the team ID.
 
@@ -77,20 +89,18 @@ A partial command must include:
 
 | Name          | Type     | Description                                                                                                               |
 | :------------ | :------- | :------------------------------------------------------------------------------------------------------------------------ |
-| `location`    | string   | Name of this location. The whole path of locations will be added in the context. Must be unique in its level.             |
-| `label`       | string   | The label to use to define the command. Cannot include spaces or tabs. Defaults to location. Must be unique in its level. |
+| `label`       | string   | (Optional) The label to use to define the command. Cannot include spaces or tabs. Defaults to location. Must be unique in its level. |
 | `hint`        | string   | (Optional) Hint line on command autocomplete.                                                                             |
 | `description` | string   | (Optional) Description line on command autocomplete.                                                                      |
 | `bindings`    | Bindings | List of subcommands.                                                                                                      |
 
-A leaf command must include either `submit` or a `form`, and the following fields:
+A leaf command must include either `submit` or a `form`, and may include the following fields:
 
 | Name          | Type   | Description                                                                                                                                  |
 | :------------ | :----- | :------------------------------------------------------------------------------------------------------------------------------------------- |
-| `location`    | string | Name of this location. The whole path of locations will be added in the context. Must be unique in its level.                                |
-| `label`       | string | The label to use to define the command. Cannot include spaces or tabs. Defaults to location. Must be unique in its level.                    |
-| `hint`        | string | (Optional) Hint line on command autocomplete.                                                                                                |
-| `description` | string | (Optional) Description line on command autocomplete.                                                                                         |
+| `label`       | string   | (Optional) The label to use to define the command. Cannot include spaces or tabs. Defaults to location. Must be unique in its parent location. |
+| `hint`        | string   | (Optional) Hint line on command autocomplete.                                                                             |
+| `description` | string   | (Optional) Description line on command autocomplete.                                                                                         |
 
 The context of the call for these bindings will include the user ID, the post ID, the root post ID (if any), the channel ID, and the team ID. It will also include the raw command.
 
