@@ -108,6 +108,67 @@ You can customize variables of the Makefile by creating a `config.override.mk` f
 
 If you create a `docker-compose.override.yaml` file at the root of the project, it will be automatically loaded by all the `Makefile` tasks using `docker-compose`, allowing you to define your own services or change the configuration of the ones mattermost provides.
 
+### Testing with CircleCI
+
+Testing locally with CircleCI can determine early if there are any issues that didn't come up in testing.
+
+These directions were written for Ubuntu 20.10.
+
+First ensure all mattermost project (i.e. `mattermost-server`, `mattermost-webapp`) are found at `~/mattermost/`. This is so that circleci can mount them.
+
+Install circleci. Execute the following command below, as this specific version is important (see https://github.com/CircleCI-Public/circleci-cli/issues/676).
+
+```bash
+curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | VERSION=0.1.16947 sudo -E bash
+```
+
+Create a new file `vim ~/.circleci/build_agent_settings.json` and add the following text (this is important for the picard docker image):
+
+```
+{"LatestSha256":"sha256:008ba7f4223f1e26c11df9575283491b620074fa96da6961e0dcde47fb757014"}
+```
+
+
+Ensure at least `docker-ce` and `docker-ce-cli` are installed by following the directions here: https://docs.docker.com/engine/install/
+
+Within the `mattermost-server` directory check that circleci is working properly:
+
+```bash
+circleci orb validate .circleci/config.yml
+```
+Within the `mattermost-server` directory execute the following to run the tests:
+
+```bash
+circleci local execute --config=.circleci/config.yml
+```
+
+You should start to see the following output:
+
+```
+Fetching latest build environment...
+Docker image digest: sha256:78f4c22eb8faa4c0bcf095fc1eecf4d53ef5fed32700f37900bbcb59ffa617ac
+====>> Spin up environment
+Build-agent version  ()
+System information:
+ Server Version: 20.10.14
+ Storage Driver: overlay2
+  Backing Filesystem: extfs
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 2
+ Kernel Version: 5.10.104-linuxkit
+ Operating System: Docker Desktop
+ OSType: linux
+ Architecture: x86_64
+
+Starting container mattermost/mattermost-build-server:20220415_golang-1.18.1
+Warning: No authentication provided, using CircleCI credentials for pulls from Docker Hub.
+  image cache not found on this host, downloading mattermost/mattermost-build-server:20220415_golang-1.18.1
+```
+
+If you see errors about not being able to mount the config file, open docker-desktop settings. Go to **Resources** > **File Sharing**, and add `/tmp` as a mounted resource. Finally, click **Apply & Restart** to save changes.
+
+![image](https://user-images.githubusercontent.com/1633901/175781542-123d0cbb-0f0f-4e1f-91fa-32951fc6069b.png)
+
 ### Testing Email Notifications
 
 When Docker starts, the SMTP server is available on port 2500. A username and password are not required.
